@@ -1,0 +1,8 @@
+#用于配置服务器tomcat的端口
+server:
+  port: 8081
+#用于时间转换由string 转成date对象
+spring:
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+12
