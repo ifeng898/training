@@ -15,7 +15,7 @@ spring:
 family:
   family-name: "happy family"
   father:
-    name: zhognxiaogang
+    name:
     #年龄取随机数
     age: ${random.int(10,100)}
   mother:
