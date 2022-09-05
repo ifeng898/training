@@ -6,3 +6,29 @@ spring:
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+12
+# 1.一个家庭由爸爸 妈妈 孩子
+#2. 这个家庭有一个名字（family-name）叫做 happy family
+#3. 爸爸有名字name 和年龄 age
+#4. 妈妈有两个别名
+#5. 孩子除了名字name和年龄age 还有一个friends集合
+#6. 每个friend有两个属性 hobby爱好和性别sex
+family:
+  family-name: "happy family"
+  father:
+    name: zhognxiaogang
+    #年龄取随机数
+    age: ${random.int(10,100)}
+  mother:
+    allias:
+      - yuanyuan
+      - rain
+  child:
+    #条件取值，如果没有family father mother，则取默认值haoen
+    name: ${family.father.mother:haoen}
+    age: 18
+    friends:
+      - hobby: football
+        sex: male
+      - hobby: basketball
+        sex: female
+
