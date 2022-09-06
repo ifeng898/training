@@ -1,8 +1,17 @@
-
+#用于配置服务器tomcat的端口
+server:
+  port: 8081
+#"JDBC:SQLSERVER://localhost:1433:databaseName=demo"
 spring:
-#这里指定springboot的配置环境 dev 指向开发环境
-  profiles:
-    active: dev
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/demo2?useUnicode=true&characterEncoding=utf-8
+    username: root
+    password: admin
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  #用于时间转换由string 转成date对象
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+12
 # 1.一个家庭由爸爸 妈妈 孩子
 #2. 这个家庭有一个名字（family-name）叫做 happy family
 #3. 爸爸有名字name 和年龄 age
