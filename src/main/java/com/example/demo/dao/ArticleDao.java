@@ -11,15 +11,25 @@ import java.util.List;
 @Repository
 public class ArticleDao {
     @Resource
-    private JdbcTemplate jdbcTemplate;
+    private JdbcTemplate primarilyJdbcTemplate;
 
-    public List<Article> findall() {
+    public List<Article> findall(JdbcTemplate jdbcTemplate) {
+        if (jdbcTemplate == null){
+            jdbcTemplate=primarilyJdbcTemplate;
+        }
         return jdbcTemplate.query("SELECT * FROM Article ", new BeanPropertyRowMapper<>(Article.class));
     }
-    public  Article find(int id){
+    public  Article find(int id,JdbcTemplate jdbcTemplate){
+
+        if (jdbcTemplate == null){
+            jdbcTemplate=primarilyJdbcTemplate;
+        }
         return jdbcTemplate.queryForObject("SELECT * FROM Article WHERE id = ?",new Object[]{id},new BeanPropertyRowMapper<>(Article.class));
     }
-    public void saveArticle(Article article) {
+    public void saveArticle(Article article,JdbcTemplate jdbcTemplate) {
+        if (jdbcTemplate == null){
+            jdbcTemplate=primarilyJdbcTemplate;
+        }
         jdbcTemplate.update("INSERT INTO Article(id,author,title,content,createTime) values (?,?,?,?,?)",
                 article.getId()
                 ,article.getAuthor()
@@ -28,15 +38,24 @@ public class ArticleDao {
                 , article.getCreateTime());
     }
 
-    public void deleteArticle() {
+    public void deleteArticle(JdbcTemplate jdbcTemplate) {
+        if (jdbcTemplate == null){
+            jdbcTemplate=primarilyJdbcTemplate;
+        }
         jdbcTemplate.update("DELETE  FROM Article");
     }
 
-    public void deleteArticle(int id) {
+    public void deleteArticle(int id,JdbcTemplate jdbcTemplate) {
+        if (jdbcTemplate == null){
+            jdbcTemplate=primarilyJdbcTemplate;
+        }
         jdbcTemplate.update("DELETE FROM Article WHERE id = ?", id);
     }
 
-    public void updateArticle(Article article) {
+    public void updateArticle(Article article,JdbcTemplate jdbcTemplate) {
+        if (jdbcTemplate == null){
+            jdbcTemplate=primarilyJdbcTemplate;
+        }
         jdbcTemplate.update("update Article SET author = ?,title = ?, content = ?, createTime = ? where id = ?",
                 article.getAuthor(),
                 article.getTitle(),
