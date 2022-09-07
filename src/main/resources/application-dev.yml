@@ -3,17 +3,30 @@ server:
   port: 8081
 #"JDBC:SQLSERVER://localhost:1433:databaseName=demo"
 spring:
+  #多个数据库源的引用配置
   datasource:
     primarily:
-      jdbc-url: jdbc:mysql://127.0.0.1:3306/demo2?useUnicode=true&characterEncoding=utf-8
+      jdbc-url: jdbc:mysql://127.0.0.1:3306/testdb?useUnicode=true&characterEncoding=utf-8
       username: root
       password: admin
       driver-class-name: com.mysql.cj.jdbc.Driver
     secondly:
-      jdbc-url: jdbc:mysql://127.0.0.1:3306/demo1?useUnicode=true&characterEncoding=utf-8
+      jdbc-url: jdbc:mysql://127.0.0.1:3306/testdb2?useUnicode=true&characterEncoding=utf-8
       username: root
       password: admin
       driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://127.0.0.1:3306/demo2?useUnicode=true&characterEncoding=utf-8
+#    username: root
+#    password: admin
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    hibernate:
+      ddl-auto: validate
+      database: mysql
+      show-sql: true
+
+
   #用于时间转换由string 转成date对象
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss

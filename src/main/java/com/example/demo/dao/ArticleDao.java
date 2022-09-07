@@ -1,6 +1,6 @@
 package com.example.demo.dao;
 
-import com.example.demo.model.Article;
+import com.example.demo.dao.testdb.Article;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;

@@ -1,7 +1,8 @@
 package com.example.demo.controller;
 
 import com.example.demo.AjaxResponse;
-import com.example.demo.model.Article;
+import com.example.demo.dao.testdb.Article;
+import com.example.demo.model.ArticleVO;
 import com.example.demo.service.demoServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -29,7 +30,7 @@ public class ArticleController {
 //                .content("content 01")
 //                .createTime(new Date()).build();
 //        log.info("article" + marticle);
-        Article m = demoService.find(id);
+        ArticleVO m = demoService.find(id);
         log.info("article" + m);
         return AjaxResponse.sucess(m, "query sucess");
     }
@@ -64,7 +65,7 @@ public class ArticleController {
                                     @RequestParam Date createtime
     ) {
         log.info("save article " + createtime);
-        demoService.saveArticle(new Article(id,author,title,content,createtime));
+        demoService.saveArticle(Article.builder().id(id).title(title).author(author).content(content).createTime(createtime).build());
         return AjaxResponse.sucess(null, "save sucess");
     }
      //这种市接收body-raw-joson 数据格式的方式 优势：可以接受对象内嵌套对象列表，因此简要这种方式
@@ -86,7 +87,7 @@ public class ArticleController {
             //todo
         }*/
 
-        Article article=new Article(id,author,title,content,createtime);
+        Article article=Article.builder().id(id).title(title).author(author).content(content).createTime(createtime).build();
         log.info("update article " + article);
         demoService.updateArticle(article);
         return AjaxResponse.sucess(article, "update sucess");

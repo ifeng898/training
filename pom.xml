@@ -74,13 +74,26 @@
             <artifactId>spring-boot-starter-jdbc</artifactId>
             <version>2.7.2</version>
         </dependency>
+
         <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.28</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jpa 方便操作数据库的工具类-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <version>2.6.6</version>
+        </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.devefx.spring.boot/dozermapper-spring-boot-starter -->
+        <dependency>
+            <groupId>org.devefx.spring.boot</groupId>
+            <artifactId>dozermapper-spring-boot-starter</artifactId>
+            <version>0.0.1</version>
+        </dependency>
 
     </dependencies>
 
