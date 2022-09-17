@@ -1,57 +1,79 @@
 package com.example.demo.config;
 
 
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateProperties;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateSettings;
+
+import com.mysql.cj.jdbc.MysqlXADataSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
-import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
+;
+
+import org.springframework.boot.jta.atomikos.AtomikosDataSourceBean;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.orm.jpa.JpaTransactionManager;
+
+import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.annotation.Resource;
-import javax.persistence.EntityManager;
+
 import javax.sql.DataSource;
-import java.util.Map;
+import java.sql.SQLException;
+import java.util.HashMap;
 
 @Configuration
-@EnableTransactionManagement
-@EnableJpaRepositories(entityManagerFactoryRef = "EntityManagerFactorySecondly", transactionManagerRef = "transactionManagerSecondly", basePackages = "com.example.demo.dao.testdb2")
+@DependsOn("transactionManager")
+@EnableJpaRepositories(entityManagerFactoryRef = "secondlyEntityManager",
+        transactionManagerRef = "transactionManager",
+        basePackages = "com.example.demo.dao.testdb2")
 public class JpaSecondlyConfig {
-
-
+    @Autowired
+    private JpaVendorAdapter jpaVendorAdapter;
     @Resource
     private JpaProperties jpaProperties;
-    @Resource
-    private HibernateProperties hibernateProperties;
 
-    @Bean("SecondlyDatasource")
+    @Bean(name = "secondlyDataSourceProperties")
     @ConfigurationProperties(prefix = "spring.datasource.secondly")
-    public DataSource SecondlyDatasource() {
-        return DataSourceBuilder.create().build();
+    public DataSourceProperties secondlyDataSourceProperties(){
+        return new DataSourceProperties();
     }
 
-    @Bean(name = "entityManagerSecondly")
-    public EntityManager entityManager(EntityManagerFactoryBuilder builder) {
-        return EntityManagerFactorySecondly(builder).getObject().createEntityManager();
+    @Bean(name = "secondlyDataSource",initMethod = "init",destroyMethod = "close")
+    @ConfigurationProperties(prefix = "spring.datasource.secondly")
+    public DataSource secondlyDatasource() throws SQLException {
+        MysqlXADataSource mysqlXADataSource=new MysqlXADataSource();
+        mysqlXADataSource.setUrl(secondlyDataSourceProperties().getUrl());
+        mysqlXADataSource.setPinGlobalTxToPhysicalConnection(true);
+        mysqlXADataSource.setPassword(secondlyDataSourceProperties().getPassword());
+        mysqlXADataSource.setUser(secondlyDataSourceProperties().getUsername());
+        AtomikosDataSourceBean xaDataSource = new AtomikosDataSourceBean();
+        xaDataSource.setXaDataSource(mysqlXADataSource);
+        xaDataSource.setUniqueResourceName("secondly");
+        return xaDataSource;
     }
 
-    @Bean(name = "EntityManagerFactorySecondly")
-    public LocalContainerEntityManagerFactoryBean EntityManagerFactorySecondly(EntityManagerFactoryBuilder builder) {
-        Map<String, Object> properties = hibernateProperties.determineHibernateProperties(jpaProperties.getProperties(), new HibernateSettings());
-        return builder.dataSource(SecondlyDatasource()).properties(properties).packages("com.example.demo.dao.testdb2").persistenceUnit("SecondlyPersistenceUnit").build();
+
+
+
+    @Bean(name = "secondlyEntityManager")
+    @DependsOn("transactionManager")
+    public LocalContainerEntityManagerFactoryBean secondlyEntityManager() throws Throwable {
+        HashMap<String,Object> properties = new HashMap<>();
+        properties.put("hibernate.transaction.jta.platform",AtomikosJtaPlatform.class.getName());
+        properties.put("javax.persistence.transactionType","JTA");
+        LocalContainerEntityManagerFactoryBean entityManager =new LocalContainerEntityManagerFactoryBean();
+        entityManager.setJtaDataSource(secondlyDatasource());
+        entityManager.setJpaVendorAdapter(jpaVendorAdapter);
+        entityManager.setPackagesToScan("com.example.demo.dao.testdb2");
+        entityManager.setPersistenceUnitName("secondlyPersistenceUnit");
+        entityManager.setJpaPropertyMap(properties);
+        return entityManager;
     }
 
-    @Bean(name = "transactionManagerSecondly")
-    public PlatformTransactionManager transactionManagerPrimary(EntityManagerFactoryBuilder builder){
-        return  new JpaTransactionManager(EntityManagerFactorySecondly(builder).getObject());
-    }
 
 }

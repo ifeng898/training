@@ -2,63 +2,78 @@ package com.example.demo.config;
 
 
 
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateProperties;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateSettings;
+import com.mysql.cj.jdbc.MysqlXADataSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 ;
-import org.springframework.boot.jdbc.DataSourceBuilder;
-import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
+
+import org.springframework.boot.jta.atomikos.AtomikosDataSourceBean;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.annotation.Resource;
-import javax.persistence.EntityManager;
 
 import javax.sql.DataSource;
-import java.util.Map;
+import java.sql.SQLException;
+import java.util.HashMap;
 
 @Configuration
-@EnableTransactionManagement
-@EnableJpaRepositories(entityManagerFactoryRef = "entityManagerFactoryPrimary", transactionManagerRef = "transactionManagerPrimary",basePackages = "com.example.demo.dao.testdb")
+@DependsOn("transactionManager")
+@EnableJpaRepositories(entityManagerFactoryRef = "primaryEntityManager",
+        transactionManagerRef = "transactionManager",
+        basePackages = "com.example.demo.dao.testdb")
 public class JpaPrimarilyConfig {
-
-
+    @Autowired
+    private JpaVendorAdapter jpaVendorAdapter;
     @Resource
     private JpaProperties jpaProperties;
-    @Resource
-    private HibernateProperties hibernateProperties;
-
     @Primary
-    @Bean("primaryDataSource")
+    @Bean(name = "primaryDataSourceProperties")
     @ConfigurationProperties(prefix = "spring.datasource.primarily")
-    public DataSource primarlyDatasource() {
-        return DataSourceBuilder.create().build();
+   public DataSourceProperties primaryDataSourceProperties(){
+       return new DataSourceProperties();
+   }
+    @Primary
+    @Bean(name = "primaryDataSource",initMethod = "init",destroyMethod = "close")
+    @ConfigurationProperties(prefix = "spring.datasource.primarily")
+    public DataSource primarlyDatasource() throws SQLException {
+        MysqlXADataSource mysqlXADataSource=new MysqlXADataSource();
+        mysqlXADataSource.setUrl(primaryDataSourceProperties().getUrl());
+        mysqlXADataSource.setPinGlobalTxToPhysicalConnection(true);
+        mysqlXADataSource.setPassword(primaryDataSourceProperties().getPassword());
+        mysqlXADataSource.setUser(primaryDataSourceProperties().getUsername());
+        AtomikosDataSourceBean xaDataSource = new AtomikosDataSourceBean();
+        xaDataSource.setXaDataSource(mysqlXADataSource);
+        xaDataSource.setUniqueResourceName("primary");
+        return xaDataSource;
     }
 
-    @Primary
-    @Bean(name = "entityManagerPrimary")
-    public EntityManager entityManager(EntityManagerFactoryBuilder builder) {
-        return EntityManagerFactoryPrimarily(builder).getObject().createEntityManager();
-    }
+
 
     @Primary
-    @Bean(name = "entityManagerFactoryPrimary")
-    public LocalContainerEntityManagerFactoryBean EntityManagerFactoryPrimarily(EntityManagerFactoryBuilder builder) {
-        Map<String, Object> properties = hibernateProperties.determineHibernateProperties(jpaProperties.getProperties(), new HibernateSettings());
-        return builder.dataSource(primarlyDatasource()).properties(properties).packages("com.example.demo.dao.testdb").persistenceUnit("primaryPersistenceUnit").build();
+    @Bean(name = "primaryEntityManager")
+    @DependsOn("transactionManager")
+    public LocalContainerEntityManagerFactoryBean primaryEntityManager() throws Throwable {
+        HashMap<String,Object> properties = new HashMap<>();
+        properties.put("hibernate.transaction.jta.platform",AtomikosJtaPlatform.class.getName());
+        properties.put("javax.persistence.transactionType","JTA");
+        LocalContainerEntityManagerFactoryBean entityManager =new LocalContainerEntityManagerFactoryBean();
+        entityManager.setJtaDataSource(primarlyDatasource());
+        entityManager.setJpaVendorAdapter(jpaVendorAdapter);
+        entityManager.setPackagesToScan("com.example.demo.dao.testdb");
+        entityManager.setPersistenceUnitName("primaryPersistenceUnit");
+        entityManager.setJpaPropertyMap(properties);
+        return entityManager;
     }
-    @Primary
-    @Bean(name = "transactionManagerPrimary")
-    public PlatformTransactionManager transactionManagerPrimary(EntityManagerFactoryBuilder builder){
-        return  new JpaTransactionManager(EntityManagerFactoryPrimarily(builder).getObject());
-    }
+
 
 }
